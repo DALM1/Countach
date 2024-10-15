@@ -14,16 +14,22 @@ function ChatController:create_room(name, password, creator)
 end
 
 function ChatController:chat_loop(client, chat_room, username)
-  client:send("Welcome, " .. username .. "\n")
+  client:send("Welcome, " .. username .. "!\n")
   while true do
-    local message = client:receive()
-    if message == "/quit" then break end
+    local message, err = client:receive()
+    if not message or err then
+      print("Error receiving message: ", err)
+      break
+    end
 
-    if message == "/list" then
+    if message == "/quit" then
+      break
+    elseif message == "/list" then
       self:list_users(chat_room, client)
     elseif message == "/history" then
       self:show_history(chat_room, client)
     else
+      print("Message from " .. username .. ": " .. message)
       chat_room:broadcast_message(message, username)
     end
   end
@@ -35,7 +41,7 @@ function ChatController:list_users(chat_room, client)
 end
 
 function ChatController:show_history(chat_room, client)
-  client:send("Message history:\n")
+  client:send("Chat history:\n")
   for _, msg in ipairs(chat_room.history) do
     client:send(msg .. "\n")
   end
